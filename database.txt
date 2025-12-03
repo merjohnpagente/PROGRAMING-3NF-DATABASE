@@ -1,0 +1,52 @@
+-- Create database
+CREATE DATABASE IF NOT EXISTS booking_system;
+USE booking_system;
+
+-- Table 1: customers (1NF, 2NF, 3NF compliant)
+CREATE TABLE customers (
+    customer_id INT PRIMARY KEY AUTO_INCREMENT,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table 2: services (1NF, 2NF, 3NF compliant)
+CREATE TABLE services (
+    service_id INT PRIMARY KEY AUTO_INCREMENT,
+    service_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    duration INT NOT NULL COMMENT 'Duration in minutes',
+    price DECIMAL(10, 2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Table 3: bookings (1NF, 2NF, 3NF compliant)
+-- No transitive dependencies, all non-key attributes depend only on primary key
+CREATE TABLE bookings (
+    booking_id INT PRIMARY KEY AUTO_INCREMENT,
+    customer_id INT NOT NULL,
+    service_id INT NOT NULL,
+    booking_date DATE NOT NULL,
+    booking_time TIME NOT NULL,
+    status ENUM('pending', 'confirmed', 'cancelled', 'completed') DEFAULT 'pending',
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE,
+    FOREIGN KEY (service_id) REFERENCES services(service_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_booking (service_id, booking_date, booking_time)
+);
+
+-- Insert sample services
+INSERT INTO services (service_name, description, duration, price) VALUES
+('Haircut', 'Professional haircut and styling', 30, 25.00),
+('Massage', 'Relaxing full body massage', 60, 80.00),
+('Consultation', 'One-on-one consultation session', 45, 50.00),
+('Spa Treatment', 'Complete spa treatment package', 90, 120.00);
+
+-- Insert sample customers
+INSERT INTO customers (first_name, last_name, email, phone) VALUES
+('John', 'Doe', 'john.doe@email.com', '123-456-7890'),
+('Jane', 'Smith', 'jane.smith@email.com', '098-765-4321');

@@ -1,0 +1,159 @@
+<?php
+header('Content-Type: application/json');
+require_once 'config.php';
+
+$action = $_POST['action'] ?? $_GET['action'] ?? '';
+
+switch($action) {
+    // ===== BOOKINGS CRUD =====
+    case 'create_booking':
+        $customer_id = sanitize($_POST['customer_id']);
+        $service_id = sanitize($_POST['service_id']);
+        $booking_date = sanitize($_POST['booking_date']);
+        $booking_time = sanitize($_POST['booking_time']);
+        $notes = sanitize($_POST['notes'] ?? '');
+        
+        $sql = "INSERT INTO bookings (customer_id, service_id, booking_date, booking_time, notes) 
+                VALUES ('$customer_id', '$service_id', '$booking_date', '$booking_time', '$notes')";
+        
+        if($conn->query($sql)) {
+            echo json_encode(['success' => true, 'message' => 'Booking created successfully', 'id' => $conn->insert_id]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $conn->error]);
+        }
+        break;
+    
+    case 'read_bookings':
+        $sql = "SELECT b.*, c.first_name, c.last_name, c.email, c.phone, 
+                s.service_name, s.price, s.duration 
+                FROM bookings b 
+                JOIN customers c ON b.customer_id = c.customer_id 
+                JOIN services s ON b.service_id = s.service_id 
+                ORDER BY b.booking_date DESC, b.booking_time DESC";
+        
+        $result = $conn->query($sql);
+        $bookings = [];
+        
+        while($row = $result->fetch_assoc()) {
+            $bookings[] = $row;
+        }
+        
+        echo json_encode(['success' => true, 'data' => $bookings]);
+        break;
+    
+    case 'update_booking':
+        $booking_id = sanitize($_POST['booking_id']);
+        $customer_id = sanitize($_POST['customer_id']);
+        $service_id = sanitize($_POST['service_id']);
+        $booking_date = sanitize($_POST['booking_date']);
+        $booking_time = sanitize($_POST['booking_time']);
+        $status = sanitize($_POST['status']);
+        $notes = sanitize($_POST['notes'] ?? '');
+        
+        $sql = "UPDATE bookings SET 
+                customer_id='$customer_id', 
+                service_id='$service_id', 
+                booking_date='$booking_date', 
+                booking_time='$booking_time', 
+                status='$status', 
+                notes='$notes' 
+                WHERE booking_id='$booking_id'";
+        
+        if($conn->query($sql)) {
+            echo json_encode(['success' => true, 'message' => 'Booking updated successfully']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $conn->error]);
+        }
+        break;
+    
+    case 'delete_booking':
+        $booking_id = sanitize($_POST['booking_id']);
+        $sql = "DELETE FROM bookings WHERE booking_id='$booking_id'";
+        
+        if($conn->query($sql)) {
+            echo json_encode(['success' => true, 'message' => 'Booking deleted successfully']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $conn->error]);
+        }
+        break;
+    
+    // ===== CUSTOMERS CRUD =====
+    case 'create_customer':
+        $first_name = sanitize($_POST['first_name']);
+        $last_name = sanitize($_POST['last_name']);
+        $email = sanitize($_POST['email']);
+        $phone = sanitize($_POST['phone']);
+        
+        $sql = "INSERT INTO customers (first_name, last_name, email, phone) 
+                VALUES ('$first_name', '$last_name', '$email', '$phone')";
+        
+        if($conn->query($sql)) {
+            echo json_encode(['success' => true, 'message' => 'Customer created successfully', 'id' => $conn->insert_id]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $conn->error]);
+        }
+        break;
+    
+    case 'read_customers':
+        $sql = "SELECT * FROM customers ORDER BY created_at DESC";
+        $result = $conn->query($sql);
+        $customers = [];
+        
+        while($row = $result->fetch_assoc()) {
+            $customers[] = $row;
+        }
+        
+        echo json_encode(['success' => true, 'data' => $customers]);
+        break;
+    
+    case 'update_customer':
+        $customer_id = sanitize($_POST['customer_id']);
+        $first_name = sanitize($_POST['first_name']);
+        $last_name = sanitize($_POST['last_name']);
+        $email = sanitize($_POST['email']);
+        $phone = sanitize($_POST['phone']);
+        
+        $sql = "UPDATE customers SET 
+                first_name='$first_name', 
+                last_name='$last_name', 
+                email='$email', 
+                phone='$phone' 
+                WHERE customer_id='$customer_id'";
+        
+        if($conn->query($sql)) {
+            echo json_encode(['success' => true, 'message' => 'Customer updated successfully']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $conn->error]);
+        }
+        break;
+    
+    case 'delete_customer':
+        $customer_id = sanitize($_POST['customer_id']);
+        $sql = "DELETE FROM customers WHERE customer_id='$customer_id'";
+        
+        if($conn->query($sql)) {
+            echo json_encode(['success' => true, 'message' => 'Customer deleted successfully']);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Error: ' . $conn->error]);
+        }
+        break;
+    
+    // ===== SERVICES CRUD =====
+    case 'read_services':
+        $sql = "SELECT * FROM services ORDER BY service_name";
+        $result = $conn->query($sql);
+        $services = [];
+        
+        while($row = $result->fetch_assoc()) {
+            $services[] = $row;
+        }
+        
+        echo json_encode(['success' => true, 'data' => $services]);
+        break;
+    
+    default:
+        echo json_encode(['success' => false, 'message' => 'Invalid action']);
+}
+
+$conn->close();
+?>
